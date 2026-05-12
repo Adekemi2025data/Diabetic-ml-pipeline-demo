@@ -1,0 +1,9 @@
+{
+  "accuracy": 0.7468,
+  "precision": 0.6744,
+  "recall": 0.537,
+  "f1_score": 0.5979,
+  "train_size": 614,
+  "test_size": 154,
+  "n_features": 8
+}
