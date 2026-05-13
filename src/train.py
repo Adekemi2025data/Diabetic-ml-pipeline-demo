@@ -13,12 +13,8 @@ def load_data(config):
     """Load dataset from local path or URL."""
     source = config["data"]["source"]
 
-    if source.startswith("http"):
-        print(f"Loading diabetes dataset from {source}...")
-        df = pd.read_csv(source)
-    else:
-        print(f"Loading diabetes dataset from {source}...")
-        df = pd.read_csv(source)
+    print(f"Loading diabetes dataset from {source}...")
+    df = pd.read_csv(source)
 
     print(f"Loaded {df.shape[0]} rows, {df.shape[1]} columns")
     return df
