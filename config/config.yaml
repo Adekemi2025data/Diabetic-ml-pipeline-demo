@@ -6,7 +6,7 @@ data:
 
 model:
   type: "RandomForestClassifier"
-  params:
+  parameters:
     n_estimators: 200
     max_depth: 8
     random_state: 42
