@@ -2,109 +2,121 @@ import pandas as pd
 import numpy as np
 import pytest
 import sys
-
-# Add src to path
 sys.path.insert(0, "src")
 
-from preprocessing import DiabetesPreprocessor
+from preprocessing import validate_dataframe, clean_data, encode_categoricals, check_data_quality
 
 
-# ---------------------------------------------------------
-# SAMPLE DIABETES DATA
-# ---------------------------------------------------------
 @pytest.fixture
 def sample_data():
     """Small dataset that mimics the diabetes dataset structure."""
     return pd.DataFrame({
         "Pregnancies": [2, 4, 1, 0, 3, 5],
-        "Glucose": [120, 0, 150, 100, 0, 130],  # zeros should become NaN
-        "BloodPressure": [70, 80, 0, 75, 65, 0],  # zeros should become NaN
-        "SkinThickness": [35, 0, 29, 0, 32, 28],
-        "Insulin": [0, 130, 0, 100, 85, 0],
-        "BMI": [33.6, 0, 28.1, 30.5, 0, 27.8],
-        "DiabetesPedigreeFunction": [0.627, 0.351, 0.672, 0.245, 0.134, 0.543],
-        "Age": [50, 31, 29, 45, 22, 41],
-        "Outcome": [1, 0, 1, 0, 1, 0]
+        "Glucose": [120, 0, 150, 100, 0, 130],  # zeros = missing
+        "BloodPressure": [70, 80, 0, 75, 65, 0],  # zeros = missing
+        "SkinThickness": [20, 0, 35, 0, 15, 25],  # zeros = missing
+        "Insulin": [80, 0, 130, 0, 100, 0],  # zeros = missing
+        "BMI": [32.5, 0, 28.1, 30.0, 0, 27.5],  # zeros = missing
+        "DiabetesPedigreeFunction": [0.5, 0.8, 0.3, 0.6, 0.9, 0.4],
+        "Age": [25, 32, 45, 29, 41, 50],
+        "Outcome": [0, 1, 0, 1, 0, 1]
     })
 
 
-# ---------------------------------------------------------
-# TEST VALIDATION
-# ---------------------------------------------------------
+# -----------------------------
+# validate_dataframe tests
+# -----------------------------
 class TestValidateDataframe:
 
     def test_valid_dataframe_passes(self, sample_data):
-        prep = DiabetesPreprocessor()
-        assert prep.validate(sample_data) is True
+        result = validate_dataframe(
+            sample_data,
+            required_columns=[
+                "Pregnancies", "Glucose", "BloodPressure", "Outcome"
+            ],
+            target_column="Outcome"
+        )
+        assert result is True
 
     def test_missing_column_raises(self, sample_data):
-        prep = DiabetesPreprocessor()
-        bad_df = sample_data.drop(columns=["Glucose"])
         with pytest.raises(ValueError, match="Missing required columns"):
-            prep.validate(bad_df)
+            validate_dataframe(
+                sample_data,
+                required_columns=["Glucose", "Nonexistent"],
+                target_column="Outcome"
+            )
 
     def test_missing_target_raises(self, sample_data):
-        prep = DiabetesPreprocessor()
-        bad_df = sample_data.drop(columns=["Outcome"])
         with pytest.raises(ValueError, match="Target column"):
-            prep.validate(bad_df)
+            validate_dataframe(
+                sample_data,
+                required_columns=["Glucose"],
+                target_column="NotAColumn"
+            )
 
     def test_empty_dataframe_raises(self):
-        prep = DiabetesPreprocessor()
-        empty_df = pd.DataFrame({"Pregnancies": [], "Outcome": []})
-        with pytest.raises(ValueError, match="Missing required columns"):
-            prep.validate(empty_df)
+        empty_df = pd.DataFrame({"Glucose": [], "Outcome": []})
+        with pytest.raises(ValueError, match="empty"):
+            validate_dataframe(empty_df, ["Glucose"], "Outcome")
 
 
-# ---------------------------------------------------------
-# TEST ZERO REPLACEMENT + MISSING FILLING
-# ---------------------------------------------------------
-class TestCleaning:
+# -----------------------------
+# clean_data tests
+# -----------------------------
+class TestCleanData:
 
-    def test_zero_replaced_with_nan(self, sample_data):
-        prep = DiabetesPreprocessor()
-        cleaned = prep.replace_zeros(sample_data)
-        assert cleaned["Glucose"].isna().sum() == 2
-        assert cleaned["BloodPressure"].isna().sum() == 2
+    def test_replaces_zeros_and_fills_numeric(self, sample_data):
+        numeric_cols = [
+            "Glucose", "BloodPressure", "SkinThickness",
+            "Insulin", "BMI"
+        ]
+        result = clean_data(sample_data, numeric_cols)
 
-    def test_fill_missing_replaces_nan(self, sample_data):
-        prep = DiabetesPreprocessor()
-        df = prep.replace_zeros(sample_data)
-        cleaned = prep.fill_missing(df)
-        assert cleaned.isna().sum().sum() == 0
+        # All zeros should be replaced with median
+        assert (result[numeric_cols] == 0).sum().sum() == 0
+        assert result[numeric_cols].isna().sum().sum() == 0
 
-    def test_original_not_modified(self, sample_data):
-        prep = DiabetesPreprocessor()
-        df_copy = sample_data.copy()
-        prep.replace_zeros(sample_data)
-        assert sample_data.equals(df_copy)
+    def test_does_not_modify_original(self, sample_data):
+        original = sample_data.copy()
+        clean_data(sample_data, ["Glucose"])
+        assert sample_data.equals(original)
 
-    def test_fill_uses_median(self, sample_data):
-        prep = DiabetesPreprocessor()
-        df = prep.replace_zeros(sample_data)
-        cleaned = prep.fill_missing(df)
-        median_glucose = df["Glucose"].median()
-        assert cleaned["Glucose"].iloc[1] == median_glucose
+    def test_fills_with_median(self, sample_data):
+        result = clean_data(sample_data, ["Glucose"])
+        median_glucose = np.median([120, 150, 100, 130])  # zeros excluded
+        assert result["Glucose"].iloc[1] == median_glucose
+        assert result["Glucose"].iloc[4] == median_glucose
 
 
-# ---------------------------------------------------------
-# TEST QUALITY REPORT
-# ---------------------------------------------------------
-class TestQualityReport:
+# -----------------------------
+# encode_categoricals tests
+# -----------------------------
+class TestEncodeCategoricals:
 
-    def test_counts_rows(self, sample_data):
-        prep = DiabetesPreprocessor()
-        report = prep.quality_report(sample_data)
-        assert report["total_rows"] == 6
+    def test_no_categoricals_returns_same_df(self, sample_data):
+        result = encode_categoricals(sample_data, [])
+        assert result.equals(sample_data)
+
+    def test_preserves_row_count(self, sample_data):
+        result = encode_categoricals(sample_data, [])
+        assert len(result) == len(sample_data)
+
+
+# -----------------------------
+# check_data_quality tests
+# -----------------------------
+class TestDataQuality:
 
     def test_counts_nulls(self, sample_data):
-        prep = DiabetesPreprocessor()
-        report = prep.quality_report(sample_data)
-        # zeros are not replaced here, so no NaN yet
+        # Before cleaning, zeros are not nulls
+        report = check_data_quality(sample_data, ["Glucose", "BloodPressure"])
         assert report["total_nulls"] == 0
 
+    def test_counts_rows(self, sample_data):
+        report = check_data_quality(sample_data, ["Glucose"])
+        assert report["total_rows"] == 6
+
     def test_reports_numeric_ranges(self, sample_data):
-        prep = DiabetesPreprocessor()
-        report = prep.quality_report(sample_data)
-        assert report["Age_min"] == 22
+        report = check_data_quality(sample_data, ["Age"])
+        assert report["Age_min"] == 25
         assert report["Age_max"] == 50

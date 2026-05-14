@@ -12,7 +12,7 @@ jobs:
   # Job 1: Run tests
   # ──────────────────────────────────────────────
   test:
-    name: Run Preprocessing & Pipeline Tests
+    name: Run Tests
     runs-on: ubuntu-latest
 
     steps:
@@ -67,7 +67,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Train diabetes model
-        run: python src/train.py
+        run: python src/train_diabetes.py
 
       - name: Upload diabetes metrics
         if: always()
