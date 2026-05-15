@@ -1,0 +1,9 @@
+,month1,month2,month3
+Pregnancies,"{'drift_score': 0.9819751636920597, 'drift_detected': False}","{'drift_score': 0.5571810050142149, 'drift_detected': False}","{'drift_score': 0.48265930765384324, 'drift_detected': False}"
+Glucose,"{'drift_score': 0.9999989366124866, 'drift_detected': False}","{'drift_score': 0.6350041668417592, 'drift_detected': False}","{'drift_score': 0.2935137071996672, 'drift_detected': False}"
+BloodPressure,"{'drift_score': 0.8571640763264791, 'drift_detected': False}","{'drift_score': 0.9999349931875315, 'drift_detected': False}","{'drift_score': 0.6350041668417592, 'drift_detected': False}"
+SkinThickness,"{'drift_score': 0.3500391832223915, 'drift_detected': False}","{'drift_score': 0.7134409343105765, 'drift_detected': False}","{'drift_score': 0.9999349931875315, 'drift_detected': False}"
+Insulin,"{'drift_score': 0.7134409343105765, 'drift_detected': False}","{'drift_score': 0.8571640763264791, 'drift_detected': False}","{'drift_score': 0.9999349931875315, 'drift_detected': False}"
+BMI,"{'drift_score': 0.9138879207312617, 'drift_detected': False}","{'drift_score': 0.9819751636920597, 'drift_detected': False}","{'drift_score': 0.9819751636920597, 'drift_detected': False}"
+DiabetesPedigreeFunction,"{'drift_score': 0.7134409343105765, 'drift_detected': False}","{'drift_score': 0.48265930765384324, 'drift_detected': False}","{'drift_score': 0.7889113669013501, 'drift_detected': False}"
+Age,"{'drift_score': 0.9138879207312617, 'drift_detected': False}","{'drift_score': 0.9557954870102465, 'drift_detected': False}","{'drift_score': 0.9999349931875315, 'drift_detected': False}"
