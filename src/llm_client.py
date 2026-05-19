@@ -27,4 +27,3 @@ def call_llm(messages):
         raise Exception(f"LLM Error {response.status_code}: {response.text}")
 
     return response.json()["output_text"]
-
